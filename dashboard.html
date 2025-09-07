@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام الإحالة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="user-info">
+                <img id="user-avatar" src="https://ui-avatars.com/api/?name=مستخدم&background=random" alt="صورة المستخدم">
+                <span id="username">مستخدم</span>
+            </div>
+            <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
+            <p>مرحبًا بك في لوحة تحكم نظام الإحالة</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="stats">الإحصائيات</div>
+            <div class="tab" data-tab="network">شبكتي</div>
+            <div class="tab" data-tab="members">إدارة الأعضاء</div>
+            <div class="tab" id="logout-btn">تسجيل الخروج</div>
+        </div>
+        
+        <div class="tab-content active" id="stats-tab">
+            <div class="dashboard">
+                <div class="stat-card">
+                    <i class="fas fa-users fa-2x"></i>
+                    <div class="stat-number" id="referrals-count">0</div>
+                    <div class="stat-label">إجمالي الإحالات</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-gift fa-2x"></i>
+                    <div class="stat-number" id="points-count">0</div>
+                    <div class="stat-label">نقاط المكافآت</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-day fa-2x"></i>
+                    <div class="stat-number" id="join-date">-</div>
+                    <div class="stat-label">تاريخ الانضمام</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-layer-group fa-2x"></i>
+                    <div class="stat-number" id="network-levels">0</div>
+                    <div class="stat-label">مستويات الشبكة</div>
+                </div>
+            </div>
+            
+            <div class="referral-section">
+                <h3><i class="fas fa-share-alt"></i> رابط الإحالة الخاص بك</h3>
+                <p>شارك هذا الرابط مع أصدقائك لتحصل على نقاط مكافآت عند انضمامهم.</p>
+                
+                <div class="referral-link">
+                    <input type="text" id="referral-link" readonly>
+                    <button class="copy-btn" id="copy-link-btn"><i class="fas fa-copy"></i> نسخ</button>
+                </div>
+                
+                <div class="social-share">
+                    <button class="social-btn facebook" id="share-fb"><i class="fab fa-facebook"></i> فيسبوك</button>
+                    <button class="social-btn twitter" id="share-twitter"><i class="fab fa-twitter"></i> تويتر</button>
+                    <button class="social-btn whatsapp" id="share-whatsapp"><i class="fab fa-whatsapp"></i> واتساب</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="network-tab">
+            <h2><i class="fas fa-network-wired"></i> شبكة الإحالات الخاصة بي</h2>
+            <p>هنا يمكنك رؤية شبكة الإحالات الخاصة بك بشكل كامل مع جميع المستويات.</p>
+            
+            <div class="network-container" id="network-container">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> جاري تحميل الشبكة...
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="members-tab">
+            <h2><i class="fas fa-users-cog"></i> إدارة أعضاء الشبكة</h2>
+            <p>من هنا يمكنك إدارة جميع أفراد شبكتك وتتبع أدائهم.</p>
+            
+            <div class="filters">
+                <select class="filter-select" id="level-filter">
+                    <option value="all">جميع المستويات</option>
+                    <option value="1">المستوى 1</option>
+                    <option value="2">المستوى 2</option>
+                    <option value="3">المستوى 3</option>
+                    <option value="4">المستوى 4+</option>
+                </select>
+                
+                <input type="text" id="search-members" placeholder="ابحث بالاسم أو البريد">
+                
+                <button id="apply-filter"><i class="fas fa-filter"></i> تطبيق الفلتر</button>
+            </div>
+            
+            <div class="stats-summary">
+                <span>إجمالي الأعضاء: <strong id="total-members">0</strong></span>
+                <span>تاريخ إنشاء المجموعة: <strong id="group-creation-date">-</strong></span>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="referrals-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>المستوى</th>
+                            <th>تاريخ الانضمام</th>
+                            <th>الإحالات</th>
+                            <th>النقاط</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="network-members">
+                        <tr>
+                            <td colspan="7" style="text-align: center;">جاري تحميل البيانات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- ملفات التطبيق -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // مشاركة على وسائل التواصل
+        document.getElementById('share-fb').addEventListener('click', () => {
+            const url = encodeURIComponent(document.getElementById('referral-link').value);
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        });
+        
+        document.getElementById('share-twitter').addEventListener('click', () => {
+            const text = encodeURIComponent('انضم إلى هذا الموقع الرائع عبر رابط الإحالة الخاص بي!');
+            const url = encodeURIComponent(document.getElementById('referral-link').value);
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        });
+        
+        document.getElementById('share-whatsapp').addEventListener('click', () => {
+            const text = encodeURIComponent('انضم إلى هذا الموقع الرائع عبر رابط الإحالة الخاص بي: ');
+            const url = encodeURIComponent(document.getElementById('referral-link').value);
+            window.open(`https://wa.me/?text=${text}${url}`, '_blank');
+        });
+        
+        // تبديل بين التبويبات
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                if (this.id === 'logout-btn') return;
+                
+                // إزالة النشاط من جميع التبويبات
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // إضافة النشاط للتبويب الحالي
+                this.classList.add('active');
+                
+                // إخفاء جميع محتويات التبويبات
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                // إظهار المحتوى المرتبط بالتبويب
+                document.getElementById(this.getAttribute('data-tab') + '-tab').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
