@@ -1,31 +1,44 @@
-// نظام الإحالة المتكامل
+// نظام الإحالة المتكامل - متوافق مع Firebase v9
 class ReferralSystem {
   constructor() {
     this.currentUser = null;
     this.userData = null;
     this.userDataCache = {};
     this.allMembers = [];
-    this.init();
+    
+    // الانتظار حتى يتم تحميل Firebase ثم التهيئة
+    if (typeof firebase !== 'undefined') {
+      this.init();
+    } else {
+      // إذا لم يتم تحميل Firebase بعد، الانتظار قليلاً
+      setTimeout(() => this.init(), 1000);
+    }
   }
 
   init() {
     // التحقق من حالة المصادقة
-    firebase.auth().onAuthStateChanged((user) => {
-      this.currentUser = user;
-      if (user) {
-        this.loadUserData(user.uid);
-        this.updateAuthUI(true);
-      } else {
-        this.updateAuthUI(false);
-        // إذا لم يكن في صفحة تسجيل الدخول/إنشاء حساب، إعادة التوجيه
-        if (!window.location.pathname.includes('index.html')) {
-          window.location.href = 'index.html';
+    if (window.firebase && window.firebase.auth) {
+      window.firebase.auth.onAuthStateChanged(window.firebase.auth.getAuth(), (user) => {
+        this.currentUser = user;
+        if (user) {
+          this.loadUserData(user.uid);
+          this.updateAuthUI(true);
+        } else {
+          this.updateAuthUI(false);
+          // إذا لم يكن في صفحة تسجيل الدخول/إنشاء حساب، إعادة التوجيه
+          if (!window.location.pathname.includes('index.html')) {
+            window.location.href = 'index.html';
+          }
         }
-      }
-    });
+      });
 
-    // إعداد معالج الأحداث
-    this.setupEventListeners();
+      // إعداد معالج الأحداث
+      this.setupEventListeners();
+    } else {
+      console.error("Firebase not initialized");
+      // إعادة المحاولة بعد ثانية
+      setTimeout(() => this.init(), 1000);
+    }
   }
 
   setupEventListeners() {
@@ -100,7 +113,11 @@ class ReferralSystem {
     
     try {
       this.showAlert(alert, 'info', 'جاري تسجيل الدخول...');
-      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await window.firebase.auth.signInWithEmailAndPassword(
+        window.firebase.auth.getAuth(), 
+        email, 
+        password
+      );
       this.showAlert(alert, 'success', 'تم تسجيل الدخول بنجاح');
       
       // تحميل بيانات المستخدم
@@ -132,24 +149,34 @@ class ReferralSystem {
       this.showAlert(alert, 'info', 'جاري إنشاء الحساب...');
       
       // إنشاء المستخدم في Authentication
-      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await window.firebase.auth.createUserWithEmailAndPassword(
+        window.firebase.auth.getAuth(), 
+        email, 
+        password
+      );
       const userId = userCredential.user.uid;
       
       // إنشاء رمز إحالة فريد
       const userReferralCode = this.generateReferralCode();
       
       // حفظ بيانات المستخدم في Realtime Database
-      await firebase.database().ref('users/' + userId).set({
-        name: name,
-        email: email,
-        referralCode: userReferralCode,
-        points: 0,
-        joinDate: new Date().toISOString(),
-        referredBy: referralCode || null
-      });
+      await window.firebase.database.set(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + userId), 
+        {
+          name: name,
+          email: email,
+          referralCode: userReferralCode,
+          points: 0,
+          joinDate: new Date().toISOString(),
+          referredBy: referralCode || null
+        }
+      );
       
       // حفظ رمز الإحالة للبحث السريع
-      await firebase.database().ref('referralCodes/' + userReferralCode).set(userId);
+      await window.firebase.database.set(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'referralCodes/' + userReferralCode), 
+        userId
+      );
       
       // إذا كان هناك رمز إحالة، إضافة العلاقة
       if (referralCode) {
@@ -175,15 +202,21 @@ class ReferralSystem {
       if (!referrerId) return;
       
       // إضافة المستخدم الجديد إلى قائمة إحالات المُحيل
-      await firebase.database().ref('userReferrals/' + referrerId + '/' + newUserId).set({
-        name: name,
-        email: email,
-        joinDate: new Date().toISOString(),
-        level: 1
-      });
+      await window.firebase.database.set(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + referrerId + '/' + newUserId), 
+        {
+          name: name,
+          email: email,
+          joinDate: new Date().toISOString(),
+          level: 1
+        }
+      );
       
       // منح نقاط للمُحيل
-      await firebase.database().ref('users/' + referrerId + '/points').transaction(points => (points || 0) + 10);
+      const userRef = window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + referrerId + '/points');
+      const snapshot = await window.firebase.database.get(userRef);
+      const currentPoints = snapshot.val() || 0;
+      await window.firebase.database.set(userRef, currentPoints + 10);
       
       // تحديث إحصائيات المُحيل
       await this.updateReferrerStats(referrerId);
@@ -195,7 +228,9 @@ class ReferralSystem {
 
   async loadUserData(userId) {
     try {
-      const snapshot = await firebase.database().ref('users/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + userId)
+      );
       this.userData = snapshot.val();
       
       if (this.userData) {
@@ -217,12 +252,18 @@ class ReferralSystem {
     try {
       // تحميل عدد مستويات الشبكة
       const networkLevels = await this.loadNetworkLevels(this.currentUser.uid);
-      document.getElementById('network-levels').textContent = networkLevels;
+      const networkLevelsEl = document.getElementById('network-levels');
+      if (networkLevelsEl) networkLevelsEl.textContent = networkLevels;
       
       // تحميل جميع الأعضاء
       this.allMembers = await this.loadAllMembers(this.currentUser.uid);
-      document.getElementById('total-members').textContent = this.allMembers.length;
-      document.getElementById('group-creation-date').textContent = new Date(this.userData.joinDate).toLocaleDateString('ar-SA');
+      const totalMembersEl = document.getElementById('total-members');
+      if (totalMembersEl) totalMembersEl.textContent = this.allMembers.length;
+      
+      const groupCreationDateEl = document.getElementById('group-creation-date');
+      if (groupCreationDateEl && this.userData.joinDate) {
+        groupCreationDateEl.textContent = new Date(this.userData.joinDate).toLocaleDateString('ar-SA');
+      }
       
       // تحميل وعرض الشبكة
       this.loadNetwork();
@@ -260,7 +301,9 @@ class ReferralSystem {
 
   async loadReferralsCount(userId) {
     try {
-      const snapshot = await firebase.database().ref('userReferrals/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + userId)
+      );
       return snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
     } catch (error) {
       console.error("Error loading referrals count:", error);
@@ -270,7 +313,9 @@ class ReferralSystem {
 
   async loadNetworkLevels(userId) {
     try {
-      const snapshot = await firebase.database().ref('userReferrals/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + userId)
+      );
       if (!snapshot.exists()) return 0;
       
       const referrals = snapshot.val();
@@ -290,7 +335,9 @@ class ReferralSystem {
 
   async getUserLevel(userId, currentLevel) {
     try {
-      const snapshot = await firebase.database().ref('userReferrals/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + userId)
+      );
       if (!snapshot.exists()) return currentLevel;
       
       const referrals = snapshot.val();
@@ -321,13 +368,17 @@ class ReferralSystem {
 
   async loadMembersRecursive(userId, membersArray, level) {
     try {
-      const snapshot = await firebase.database().ref('userReferrals/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + userId)
+      );
       if (!snapshot.exists()) return;
       
       const referrals = snapshot.val();
       
       for (const referredUserId in referrals) {
-        const userSnapshot = await firebase.database().ref('users/' + referredUserId).once('value');
+        const userSnapshot = await window.firebase.database.get(
+          window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + referredUserId)
+        );
         const userData = userSnapshot.val();
         
         if (userData) {
@@ -427,7 +478,9 @@ class ReferralSystem {
     if (currentLevel > maxLevel) return;
     
     try {
-      const snapshot = await firebase.database().ref('userReferrals/' + userId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + userId)
+      );
       if (!snapshot.exists()) return;
       
       const referrals = snapshot.val();
@@ -438,7 +491,9 @@ class ReferralSystem {
       
       // تحميل بيانات المستخدم إذا لم تكن موجودة مسبقًا
       if (!this.userDataCache[userId]) {
-        const userSnapshot = await firebase.database().ref('users/' + userId).once('value');
+        const userSnapshot = await window.firebase.database.get(
+          window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + userId)
+        );
         this.userDataCache[userId] = userSnapshot.val();
       }
       
@@ -540,7 +595,9 @@ class ReferralSystem {
 
   async getUserIdFromReferralCode(referralCode) {
     try {
-      const snapshot = await firebase.database().ref('referralCodes/' + referralCode).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'referralCodes/' + referralCode)
+      );
       return snapshot.val();
     } catch (error) {
       console.error("Error getting user ID from referral code:", error);
@@ -551,11 +608,16 @@ class ReferralSystem {
   async updateReferrerStats(referrerId) {
     try {
       // حساب عدد الإحالات الكلي
-      const snapshot = await firebase.database().ref('userReferrals/' + referrerId).once('value');
+      const snapshot = await window.firebase.database.get(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'userReferrals/' + referrerId)
+      );
       const referralsCount = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
       
       // تحديث عدد الإحالات
-      await firebase.database().ref('users/' + referrerId + '/referralsCount').set(referralsCount);
+      await window.firebase.database.set(
+        window.firebase.database.ref(window.firebase.database.getDatabase(), 'users/' + referrerId + '/referralsCount'), 
+        referralsCount
+      );
       
     } catch (error) {
       console.error("Error updating referrer stats:", error);
@@ -586,7 +648,7 @@ class ReferralSystem {
 
   async handleLogout() {
     try {
-      await firebase.auth().signOut();
+      await window.firebase.auth.signOut(window.firebase.auth.getAuth());
       window.location.href = 'index.html';
     } catch (error) {
       console.error("Error signing out:", error);
@@ -617,5 +679,7 @@ class ReferralSystem {
   }
 }
 
-// تهيئة التطبيق
-const app = new ReferralSystem();
+// تهيئة التطبيق بعد تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  window.app = new ReferralSystem();
+});

@@ -124,13 +124,11 @@
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+ <!-- Firebase الإصدار 9 -->
+<script type="module" src="firebase.js"></script>
 
-    <!-- ملفات التطبيق -->
-    <script src="firebase-config.js"></script>
-    <script src="app.js"></script>
+<!-- ملف التطبيق الرئيسي -->
+<script src="app.js"></script>
 
     <script>
         // مشاركة على وسائل التواصل
@@ -165,6 +163,16 @@
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                 // إظهار المحتوى المرتبط بالتبويب
                 document.getElementById(this.getAttribute('data-tab') + '-tab').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>a-tab') + '-tab').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>this.getAttribute('data-tab') + '-tab').classList.add('active');
             });
         });
     </script>

@@ -69,13 +69,13 @@
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Firebase الإصدار 9 -->
+<script type="module" src="firebase.js"></script>
 
-    <!-- ملفات التطبيق -->
-    <script src="firebase-config.js"></script>
-    <script src="app.js"></script>
+<!-- ملف التطبيق الرئيسي -->
+<script src="app.js"></script>
+    
+    
 
     <script>
         // التحقق من وجود رمز إحالة في URL
@@ -98,6 +98,15 @@
             document.getElementById('login-tab').classList.remove('active');
             document.getElementById('register-form').classList.add('active');
             document.getElementById('login-form').classList.remove('active');
+        });
+    </script>
+</body>
+</html>');
+            document.getElementById('login-form').classList.remove('active');
+        });
+    </script>
+</body>
+</html>Id('login-form').classList.remove('active');
         });
     </script>
 </body>
