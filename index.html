@@ -3,111 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الإحالة - تسجيل الدخول</title>
+    <title>نظام الإحالة - الرئيسية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
+            <div class="user-info auth-only">
+                <img id="user-avatar" src="https://ui-avatars.com/api/?name=مستخدم&background=random" alt="صورة المستخدم">
+                <span id="username">مستخدم</span>
+            </div>
             <h1><i class="fas fa-network-wired"></i> نظام إدارة شبكة الإحالات</h1>
             <p>ادارة وتتبع شبكة الإحالات الخاصة بك بشكل كامل</p>
         </header>
         
-        <div class="auth-container">
-            <div class="auth-tabs">
-                <div class="auth-tab active" id="login-tab">تسجيل الدخول</div>
-                <div class="auth-tab" id="register-tab">إنشاء حساب</div>
+        <div class="tabs">
+            <div class="tab active">الرئيسية</div>
+            <div class="tab auth-only" onclick="window.location.href='dashboard.html'">لوحة التحكم</div>
+            <div class="tab auth-only" onclick="window.location.href='network.html'">شبكتي</div>
+            <div class="tab auth-only" onclick="window.location.href='management.html'">الإدارة</div>
+            <div class="tab unauth-only" onclick="window.location.href='login.html'">تسجيل الدخول</div>
+            <div class="tab unauth-only" onclick="window.location.href='register.html'">إنشاء حساب</div>
+        </div>
+        
+        <div class="tab-content active">
+            <h2>مرحبًا بك في نظام الإحالة</h2>
+            <p>هذا النظام يمكنك من إنشاء شبكة إحالات خاصة بك وكسب النقاط والمكافآت.</p>
+            
+            <div class="auth-only">
+                <p>يمكنك الآن الانتقال إلى <a href="dashboard.html">لوحة التحكم</a> لإدارة حسابك.</p>
             </div>
             
-            <div class="auth-content">
-                <!-- نموذج تسجيل الدخول -->
-                <form id="login-form" class="auth-form active">
-                    <div class="form-group">
-                        <label for="login-email">البريد الإلكتروني</label>
-                        <input type="email" id="login-email" placeholder="أدخل بريدك الإلكتروني" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="login-password">كلمة المرور</label>
-                        <input type="password" id="login-password" placeholder="أدخل كلمة المرور" required>
-                    </div>
-                    
-                    <button type="submit">تسجيل الدخول</button>
-                    
-                    <div class="alert" id="login-alert"></div>
-                </form>
-                
-                <!-- نموذج إنشاء حساب -->
-                <form id="register-form" class="auth-form">
-                    <div class="form-group">
-                        <label for="register-name">الاسم الكامل</label>
-                        <input type="text" id="register-name" placeholder="أدخل اسمك الكامل" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="register-email">البريد الإلكتروني</label>
-                        <input type="email" id="register-email" placeholder="أدخل بريدك الإلكتروني" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="register-password">كلمة المرور</label>
-                        <input type="password" id="register-password" placeholder="أنشئ كلمة مرور قوية" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="referral-code">رمز الإحالة (اختياري)</label>
-                        <input type="text" id="referral-code" placeholder="أدخل رمز الإحالة إذا كان لديك">
-                    </div>
-                    
-                    <button type="submit">إنشاء حساب</button>
-                    
-                    <div class="alert" id="register-alert"></div>
-                </form>
+            <div class="unauth-only">
+                <p>للبدء، يرجى <a href="login.html">تسجيل الدخول</a> أو <a href="register.html">إنشاء حساب جديد</a>.</p>
             </div>
         </div>
     </div>
 
     <!-- Firebase SDK -->
-    <!-- Firebase الإصدار 9 -->
-<script type="module" src="firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- ملف التطبيق الرئيسي -->
-<script src="app.js"></script>
-    
-    
-
-    <script>
-        // التحقق من وجود رمز إحالة في URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
-        if (refCode) {
-            document.getElementById('referral-code').value = refCode;
-        }
-        
-        // التبديل بين تسجيل الدخول وإنشاء حساب
-        document.getElementById('login-tab').addEventListener('click', () => {
-            document.getElementById('login-tab').classList.add('active');
-            document.getElementById('register-tab').classList.remove('active');
-            document.getElementById('login-form').classList.add('active');
-            document.getElementById('register-form').classList.remove('active');
-        });
-        
-        document.getElementById('register-tab').addEventListener('click', () => {
-            document.getElementById('register-tab').classList.add('active');
-            document.getElementById('login-tab').classList.remove('active');
-            document.getElementById('register-form').classList.add('active');
-            document.getElementById('login-form').classList.remove('active');
-        });
-    </script>
-</body>
-</html>');
-            document.getElementById('login-form').classList.remove('active');
-        });
-    </script>
-</body>
-</html>Id('login-form').classList.remove('active');
-        });
-    </script>
+    <!-- ملفات التطبيق -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
